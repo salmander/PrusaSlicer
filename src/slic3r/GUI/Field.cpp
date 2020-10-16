@@ -796,15 +796,21 @@ void SpinCtrl::msw_rescale(bool rescale_sidetext/* = false*/)
     field->SetMinSize(wxSize(def_width() * m_em_unit, int(1.9f*field->GetFont().GetPixelSize().y)));
 }
 
+#ifdef __WXOSX__
+using choice_ctrl = wxBitmapComboBox;
+#else
+using choice_ctrl = wxComboBox;
+#endif // __WXOSX__
+
 void Choice::BUILD() {
     wxSize size(def_width_wider() * m_em_unit, wxDefaultCoord);
     if (m_opt.height >= 0) size.SetHeight(m_opt.height*m_em_unit);
     if (m_opt.width >= 0) size.SetWidth(m_opt.width*m_em_unit);
 
-	wxBitmapComboBox* temp;	
+	choice_ctrl* temp;	
     if (!m_opt.gui_type.empty() && m_opt.gui_type.compare("select_open") != 0) {
         m_is_editable = true;
-        temp = new wxBitmapComboBox(m_parent, wxID_ANY, wxString(""), wxDefaultPosition, size);
+        temp = new choice_ctrl(m_parent, wxID_ANY, wxString(""), wxDefaultPosition, size);
     }
     else {
 #ifdef __WXOSX__
@@ -812,11 +818,11 @@ void Choice::BUILD() {
          * so ToolTip doesn't shown.
          * Next workaround helps to solve this problem
          */
-        temp = new wxBitmapComboBox();
+        temp = new choice_ctrl();
         temp->SetTextCtrlStyle(wxTE_READONLY);
         temp->Create(m_parent, wxID_ANY, wxString(""), wxDefaultPosition, size, 0, nullptr);
 #else
-        temp = new wxBitmapComboBox(m_parent, wxID_ANY, wxString(""), wxDefaultPosition, size, 0, nullptr, wxCB_READONLY);
+        temp = new choice_ctrl(m_parent, wxID_ANY, wxString(""), wxDefaultPosition, size, 0, nullptr, wxCB_READONLY);
 #endif //__WXOSX__
     }
 
@@ -839,7 +845,8 @@ void Choice::BUILD() {
 		set_selection();
 	}
 
-#ifndef __WXGTK__
+#ifdef __WXOSX__
+//#ifndef __WXGTK__
     /* Workaround for a correct rendering of the control without Bitmap (under MSW and OSX):
      * 
      * 1. We should create small Bitmap to fill Bitmaps RefData,
@@ -866,7 +873,7 @@ void Choice::BUILD() {
             }
 
             double old_val = !m_value.empty() ? boost::any_cast<double>(m_value) : -99999;
-            if (is_defined_input_value<wxBitmapComboBox>(window, m_opt.type)) {
+            if (is_defined_input_value<choice_ctrl>(window, m_opt.type)) {
                 if (fabs(old_val - boost::any_cast<double>(get_value())) <= 0.0001)
                     return;
                 else
@@ -889,7 +896,7 @@ void Choice::set_selection()
 
 	wxString text_value = wxString("");
 
-    wxBitmapComboBox* field = dynamic_cast<wxBitmapComboBox*>(window);
+    choice_ctrl* field = dynamic_cast<choice_ctrl*>(window);
 	switch (m_opt.type) {
 	case coFloat:
 	case coPercent:	{
@@ -959,7 +966,7 @@ void Choice::set_value(const std::string& value, bool change_event)  //! Redunda
 		++idx;
 	}
 
-    wxBitmapComboBox* field = dynamic_cast<wxBitmapComboBox*>(window);
+    choice_ctrl* field = dynamic_cast<choice_ctrl*>(window);
 	idx == m_opt.enum_values.size() ? 
 		field->SetValue(value) :
 		field->SetSelection(idx);
@@ -971,7 +978,7 @@ void Choice::set_value(const boost::any& value, bool change_event)
 {
 	m_disable_change_event = !change_event;
 
-    wxBitmapComboBox* field = dynamic_cast<wxBitmapComboBox*>(window);
+    choice_ctrl* field = dynamic_cast<choice_ctrl*>(window);
 
 	switch (m_opt.type) {
 	case coInt:
@@ -1047,7 +1054,7 @@ void Choice::set_values(const std::vector<std::string>& values)
 
 // 	# it looks that Clear() also clears the text field in recent wxWidgets versions,
 // 	# but we want to preserve it
-	auto ww = dynamic_cast<wxBitmapComboBox*>(window);
+	auto ww = dynamic_cast<choice_ctrl*>(window);
 	auto value = ww->GetValue();
 	ww->Clear();
 	ww->Append("");
@@ -1060,7 +1067,7 @@ void Choice::set_values(const std::vector<std::string>& values)
 
 boost::any& Choice::get_value()
 {
-    wxBitmapComboBox* field = dynamic_cast<wxBitmapComboBox*>(window);
+    choice_ctrl* field = dynamic_cast<choice_ctrl*>(window);
 
 	wxString ret_str = field->GetValue();	
 
@@ -1120,11 +1127,14 @@ boost::any& Choice::get_value()
 	return m_value;
 }
 
+void Choice::enable()  { dynamic_cast<choice_ctrl*>(window)->Enable(); };
+void Choice::disable() { dynamic_cast<choice_ctrl*>(window)->Disable(); };
+
 void Choice::msw_rescale(bool rescale_sidetext/* = false*/)
 {
     Field::msw_rescale();
 
-    wxBitmapComboBox* field = dynamic_cast<wxBitmapComboBox*>(window);
+    choice_ctrl* field = dynamic_cast<choice_ctrl*>(window);
     const wxString selection = field->GetValue();// field->GetString(index);
 
 	/* To correct scaling (set new controll size) of a wxBitmapCombobox 
@@ -1155,9 +1165,11 @@ void Choice::msw_rescale(bool rescale_sidetext/* = false*/)
         }
     }
 
+#ifdef __WXOSX__
     wxBitmap empty_bmp(1, field->GetFont().GetPixelSize().y + 2);
     empty_bmp.SetWidth(0);
     field->SetItemBitmap(0, empty_bmp);
+#endif
 
     idx == m_opt.enum_values.size() ?
         field->SetValue(selection) :
