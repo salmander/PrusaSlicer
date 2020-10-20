@@ -2038,6 +2038,7 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
         this->q->Bind(EVT_REMOVABLE_DRIVES_CHANGED, [this, q](RemovableDrivesChangedEvent &) {
 		    this->show_action_buttons(this->ready_to_slice); 
 		    if (!this->sidebar->get_eject_shown()) {
+                BOOST_LOG_TRIVIAL(error) << "close_notification_of_type: ExportToRemovableFinished";
 			    notification_manager->close_notification_of_type(NotificationType::ExportToRemovableFinished);
 		    }
 	    });
@@ -3619,13 +3620,19 @@ void Plater::priv::on_process_completed(SlicingProcessCompletedEvent &evt)
     }
     else if (wxGetApp().get_mode() == comSimple)
 	{
+        BOOST_LOG_TRIVIAL(error) << "comSimple";
 		show_action_buttons(false);
 	}
 	else if (this->writing_to_removable_device)
 	{
 		show_action_buttons(false);
+        BOOST_LOG_TRIVIAL(error) << "writing_to_removable_device";
 		notification_manager->push_notification(NotificationType::ExportToRemovableFinished, *q->get_current_canvas3D());
 	}
+    else if (!this->writing_to_removable_device)
+    {
+        BOOST_LOG_TRIVIAL(error) << "NOT writing_to_removable_device";
+    }
 	this->writing_to_removable_device = false;
 }
 
