@@ -3623,7 +3623,7 @@ void Plater::priv::on_process_completed(SlicingProcessCompletedEvent &evt)
         BOOST_LOG_TRIVIAL(error) << "comSimple";
 		show_action_buttons(false);
 	}
-	else if (this->writing_to_removable_device)
+	if (!evt.cancelled() && this->writing_to_removable_device)
 	{
 		show_action_buttons(false);
         BOOST_LOG_TRIVIAL(error) << "writing_to_removable_device";
