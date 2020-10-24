@@ -1,0 +1,20 @@
+name: Sync upstream master with salmander/master
+
+on:
+  schedule:
+    - cron: '*/30 * * * *' # every 30 minutes
+  workflow_dispatch: # on button click
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git pull --unshallow  # this option is very important
+          git remote add upstream https://github.com/prusa3d/PrusaSlicer.git
+          git fetch upstream
+          git pull --rebase upstream master
+          git push -f origin master
