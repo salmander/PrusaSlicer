@@ -1,0 +1,87 @@
+name: Build artifact for OSX
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: change date in version
+      run: |
+        sed "s/+UNKNOWN/_$(date '+%F')/" version.inc > version.date.inc
+        mv version.date.inc version.inc
+    - name: mkdir in deps
+      run: mkdir deps/build
+    - name: cmake deps
+      working-directory: ./deps/build
+      run: cmake .. -DCMAKE_OSX_DEPLOYMENT_TARGET="10.13"
+    - name: make deps
+      working-directory: ./deps/build
+      run: make
+    - name: ls libs
+      working-directory: ./deps/build
+      run: ls ./destdir/usr/local/lib
+    - name: rename wxscintilla
+      working-directory: ./deps/build/destdir/usr/local/lib
+      run: cp libwxscintilla-3.1.a libwx_osx_cocoau_scintilla-3.1.a
+    - name: ls libs
+      working-directory: ./deps/build
+      run: ls ./destdir/usr/local/lib
+    - name: clean deps
+      working-directory: ./deps/build
+      run: rm -rf dep_*
+    - name: mkdir build
+      run: mkdir build
+    - name: cmake
+      working-directory: ./build
+      run: cmake .. -DCMAKE_PREFIX_PATH="$PWD/../deps/build/destdir/usr/local" -DCMAKE_OSX_DEPLOYMENT_TARGET="10.13" -DSLIC3R_STATIC=1
+    - name: make PrusaSlicer
+      working-directory: ./build
+      run: make
+    - name: update Info.plist
+      working-directory: ./build/src
+      run: sed "s/+UNKNOWN/_$(date '+%F')/" Info.plist >Info.date.plist
+    - name: create dmg directory structure
+      working-directory: ./build
+      run: |
+        mkdir PrusaSlicer
+        mkdir PrusaSlicer/PrusaSlicer_alpha.app
+        mkdir PrusaSlicer/PrusaSlicer_alpha.app/Contents
+        mkdir PrusaSlicer/PrusaSlicer_alpha.app/Contents/_CodeSignature
+        mkdir PrusaSlicer/PrusaSlicer_alpha.app/Contents/Frameworks
+        mkdir PrusaSlicer/PrusaSlicer_alpha.app/Contents/MacOS
+    - name: copy Resources to dmg directory structure
+      working-directory: ./build
+      run: |
+        cp -Rf ../resources PrusaSlicer/PrusaSlicer_alpha.app/Contents/Resources
+        cp PrusaSlicer/PrusaSlicer_alpha.app/Contents/Resources/icons/PrusaSlicer.icns PrusaSlicer/PrusaSlicer_alpha.app/Contents/resources/PrusaSlicer.icns
+        cp src/Info.date.plist PrusaSlicer/PrusaSlicer_alpha.app/Contents/Info.plist
+        echo -n -e 'APPL????\x0a' > PkgInfo
+        cp PkgInfo PrusaSlicer/PrusaSlicer_alpha.app/Contents/PkgInfo
+
+    - name: copy bin and do not let it lower case
+      working-directory: ./build
+      run: |
+        cp -f src/prusaslicer PrusaSlicer/PrusaSlicer_alpha.app/Contents/MacOS/PrusaSlicer
+        chmod u+x PrusaSlicer/PrusaSlicer_alpha.app/Contents/MacOS/PrusaSlicer
+        tar -cvf PrusaSlicer.tar PrusaSlicer
+    - name: create dmg
+      working-directory: ./build
+      run: |
+        hdiutil create -ov -fs HFS+ -volname "PrusaSlicer" -srcfolder "PrusaSlicer" temp.dmg
+        hdiutil convert temp.dmg -format UDZO -o PrusaSlicer.dmg
+    - name: Upload artifact dmg
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: nightly_macos.dmg
+        path: build/PrusaSlicer.dmg
+    - name: Upload artifact tar
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: nightly_macos.tar
+        path: build/PrusaSlicer.tar
