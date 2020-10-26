@@ -2,7 +2,7 @@ name: Sync upstream master with salmander/master
 
 on:
   schedule:
-    - cron: '0 0 * * *' # every 30 minutes
+    - cron: '0 0 * * *' # every day at midnight
   workflow_dispatch: # on button click
 
 jobs:
@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v2
       - run: |
           git config user.name github-actions
-          git config user.email github-actions@github.com
+          git config user.email salmander@users.noreply.github.com
           git pull --unshallow  # this option is very important
           git remote add upstream https://github.com/prusa3d/PrusaSlicer.git
           git fetch upstream
