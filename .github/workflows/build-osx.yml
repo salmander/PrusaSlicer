@@ -30,7 +30,7 @@ jobs:
       run: make
     - name: ls libs
       working-directory: ./deps/build
-      run: ls ./destdir/usr/local/lib
+      run: ls ./destdir/usr/local/lib/
     - name: rename wxscintilla
       working-directory: ./deps/build/destdir/usr/local/lib
       run: cp libwxscintilla-3.1.a libwx_osx_cocoau_scintilla-3.1.a
@@ -55,25 +55,25 @@ jobs:
       working-directory: ./build
       run: |
         mkdir PrusaSlicer
-        mkdir PrusaSlicer/PrusaSlicer_alpha.app
-        mkdir PrusaSlicer/PrusaSlicer_alpha.app/Contents
-        mkdir PrusaSlicer/PrusaSlicer_alpha.app/Contents/_CodeSignature
-        mkdir PrusaSlicer/PrusaSlicer_alpha.app/Contents/Frameworks
-        mkdir PrusaSlicer/PrusaSlicer_alpha.app/Contents/MacOS
+        mkdir PrusaSlicer/PrusaSlicer_beta.app
+        mkdir PrusaSlicer/PrusaSlicer_beta.app/Contents
+        mkdir PrusaSlicer/PrusaSlicer_beta.app/Contents/_CodeSignature
+        mkdir PrusaSlicer/PrusaSlicer_beta.app/Contents/Frameworks
+        mkdir PrusaSlicer/PrusaSlicer_beta.app/Contents/MacOS
     - name: copy Resources to dmg directory structure
       working-directory: ./build
       run: |
-        cp -Rf ../resources PrusaSlicer/PrusaSlicer_alpha.app/Contents/Resources
-        cp PrusaSlicer/PrusaSlicer_alpha.app/Contents/Resources/icons/PrusaSlicer.icns PrusaSlicer/PrusaSlicer_alpha.app/Contents/resources/PrusaSlicer.icns
-        cp src/Info.date.plist PrusaSlicer/PrusaSlicer_alpha.app/Contents/Info.plist
+        cp -Rf ../resources PrusaSlicer/PrusaSlicer_beta.app/Contents/Resources
+        cp PrusaSlicer/PrusaSlicer_beta.app/Contents/Resources/icons/PrusaSlicer.icns PrusaSlicer/PrusaSlicer_beta.app/Contents/resources/PrusaSlicer.icns
+        cp src/Info.date.plist PrusaSlicer/PrusaSlicer_beta.app/Contents/Info.plist
         echo -n -e 'APPL????\x0a' > PkgInfo
-        cp PkgInfo PrusaSlicer/PrusaSlicer_alpha.app/Contents/PkgInfo
+        cp PkgInfo PrusaSlicer/PrusaSlicer_beta.app/Contents/PkgInfo
 
     - name: copy bin and do not let it lower case
       working-directory: ./build
       run: |
-        cp -f src/prusaslicer PrusaSlicer/PrusaSlicer_alpha.app/Contents/MacOS/PrusaSlicer
-        chmod u+x PrusaSlicer/PrusaSlicer_alpha.app/Contents/MacOS/PrusaSlicer
+        cp -f src/prusaslicer PrusaSlicer/PrusaSlicer_beta.app/Contents/MacOS/PrusaSlicer
+        chmod u+x PrusaSlicer/PrusaSlicer_beta.app/Contents/MacOS/PrusaSlicer
         tar -cvf PrusaSlicer.tar PrusaSlicer
     - name: create dmg
       working-directory: ./build
